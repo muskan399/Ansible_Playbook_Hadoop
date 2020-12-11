@@ -1,0 +1,48 @@
+- hosts: datanode
+  vars_files:
+          - hadoop_var.yml
+  tasks:
+          - file: 
+                  path: "/root/hadoop/Packages"
+                  state: directory
+          - copy:
+                  src: "/root/hadoop"
+                  dest: "/root/hadoop"
+          - dnf:
+                  name: "python3-dnf"
+ 
+
+          - dnf:
+                  name: "/root/hadoop/hadoop/jdk-8u171-linux-x64.rpm"
+                  disable_gpg_check: yes
+          - shell:
+                  cmd: "rpm -i hadoop-1.2.1-1.x86_64.rpm --force"
+                  chdir: "/root/hadoop/hadoop"
+          - file:
+                  path: "/{{dn_folder}}"
+                  state: "directory"
+
+
+          - blockinfile:
+                  path: "/etc/hadoop/hdfs-site.xml"
+                  insertafter: "<configuration>"
+                  block: "<property>\n<name>dfs.data.dir</name>\n<value>{{dn_folder}}</value>\n</property>\n"
+            notify:
+                          - Start Datanode
+          
+          - blockinfile:
+                  path: "/etc/hadoop/core-site.xml"
+                  insertafter: "<configuration>"
+                  block:
+                          "<property>
+                          \n<name>fs.default.name</name>
+                          \n<value>hdfs://{{ansible_facts['default_ipv4']['address']}}:{{nn_port_number}}</value>
+                          \n</property>"
+           
+
+  handlers:
+           - name: Start Datanode
+             shell:
+                     cmd: "hadoop-daemon.sh start datanode"
+
+

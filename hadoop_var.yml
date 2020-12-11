@@ -1,0 +1,3 @@
+nn_folder: "/nn"
+dn_folder: "/dn"
+nn_port_number: "8080"
