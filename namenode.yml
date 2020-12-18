@@ -21,13 +21,7 @@
           - file:
                   path: "/{{nn_folder}}"
                   state: "directory"
-          - name: Checking Namenode
-            command:
-                  cmd: "hadoop dfsadmin -report"
-            ignore_errors: yes
-            no_log: True
-            register: x
-
+     
 
           - blockinfile:
                   path: "/etc/hadoop/hdfs-site.xml"
@@ -46,19 +40,19 @@
                           \n<name>fs.default.name</name>
                           \n<value>hdfs://{{ansible_facts['default_ipv4']['address']}}:{{nn_port_number}}</value>
                           \n</property>"
-          
-          - name: Start Namenode
-            shell:
-                  cmd: "hadoop-daemon.sh start namenode"
-            when: x.rc!=0
-             
-         
+            notify:
+                    - Start Namenode
+
+        
   handlers:
            - name: Format Namenode
-             changed_when: false
              ignore_errors: yes
              shell:
                     cmd: "echo Y|hadoop namenode -format"
+           - name: Start Namenode
+             shell:
+                     cmd: "hadoop-daemon.sh start namenode"
+             ignore_errors: yes
            
          
            
