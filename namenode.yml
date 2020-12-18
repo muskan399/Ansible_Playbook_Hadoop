@@ -1,4 +1,4 @@
-- hosts: all
+- hosts: namenode
   vars_files:
           - hadoop_var.yml
   tasks:
@@ -21,6 +21,12 @@
           - file:
                   path: "/{{nn_folder}}"
                   state: "directory"
+          - name: Checking Namenode
+            command:
+                  cmd: "hadoop dfsadmin -report"
+            ignore_errors: yes
+            no_log: True
+            register: x
 
 
           - blockinfile:
@@ -29,7 +35,8 @@
                   block: "<property>\n<name>dfs.name.dir</name>\n<value>{{nn_folder}}</value>\n</property>\n"
             notify:
                           - Format Namenode
-                          - Start Namenode
+          - debug:
+                  var: x
           
           - blockinfile:
                   path: "/etc/hadoop/core-site.xml"
@@ -39,15 +46,21 @@
                           \n<name>fs.default.name</name>
                           \n<value>hdfs://{{ansible_facts['default_ipv4']['address']}}:{{nn_port_number}}</value>
                           \n</property>"
-           
-
+          
+          - name: Start Namenode
+            shell:
+                  cmd: "hadoop-daemon.sh start namenode"
+            when: x.rc!=0
+             
+         
   handlers:
            - name: Format Namenode
+             changed_when: false
+             ignore_errors: yes
              shell:
                     cmd: "echo Y|hadoop namenode -format"
-           - name: Start Namenode
-             shell:
-                     cmd: "hadoop-daemon.sh start namenode"
+           
+         
+           
 
-
-          i
+           
